@@ -21,6 +21,8 @@ public class InputManager : MonoBehaviour
         inGame.Enable();
 
         move = GetComponent<PlayerMove>();
+
+        inGame.Jump.started += ctx => move.Jump();
     }
 
     private void Update()

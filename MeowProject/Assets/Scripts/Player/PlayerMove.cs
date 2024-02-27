@@ -14,11 +14,23 @@ public class PlayerMove : MonoBehaviour
     public float turnSmoothTime = 0.1f;
     private float turnSpeedVelocity;
 
+    private Vector3 moveVel = Vector3.zero;
+
+    private const float gravity = 8.9f;
+
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         camTransform = Camera.main.transform;
-        speedWalk = 3.5f;
+        speedWalk = 5f;
+    }
+
+    private void FixedUpdate()
+    {
+        
+            moveVel.y = -gravity;
+        
+        characterController.Move(moveVel * Time.deltaTime);
     }
 
     public void ProcessMove(Vector2 input)
@@ -28,16 +40,27 @@ public class PlayerMove : MonoBehaviour
         direction.z = input.y;
 
         speedCurrect = speedWalk;
-
-
-        if(direction.magnitude >= 0.1f)
+        Vector3 moveDir = Vector3.zero;
+        
+        if (direction.magnitude >= 0.1f)
         {
             float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + camTransform.eulerAngles.y;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSpeedVelocity, turnSmoothTime);
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSpeedVelocity, turnSmoothTime);
+            transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
 
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            characterController.Move(moveDir.normalized * speedWalk * Time.deltaTime);
+            moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            
+            
         }
+        
+        characterController.Move(moveDir.normalized * speedWalk * Time.deltaTime);
+        
+    }
+
+    public void Jump()
+    {
+        
+            moveVel.y += Mathf.Sqrt(3f*gravity);
+        
     }
 }
