@@ -4,63 +4,62 @@ using UnityEngine;
 
 public class PlayerMove : MonoBehaviour
 {
-    private CharacterController characterController;
-    private Transform camTransform;
+    private CharacterController controller;
+    private Camera cam;
 
-    private float speedCurrect;
-    private float speedWalk;
-    private float speedSmooth;
+    private Vector3 playerVelocity;
+    private bool isGrounded;
+
+    public float speed = 5f;
+    public float gravity = -9.8f;
+    public float jumpHeight = 1f;
 
     public float turnSmoothTime = 0.1f;
     private float turnSpeedVelocity;
 
-    private Vector3 moveVel = Vector3.zero;
-
-    private const float gravity = 8.9f;
-
-    private void Awake()
+    private void Start()
     {
-        characterController = GetComponent<CharacterController>();
-        camTransform = Camera.main.transform;
-        speedWalk = 5f;
+        controller = GetComponent<CharacterController>();
+        cam = Camera.main;
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        
-            moveVel.y = -gravity;
-        
-        characterController.Move(moveVel * Time.deltaTime);
+        isGrounded = controller.isGrounded;
     }
 
     public void ProcessMove(Vector2 input)
     {
-        Vector3 direction = Vector3.zero;
-        direction.x = input.x;
-        direction.z = input.y;
+        Vector3 moveDirection = Vector3.zero;
+        moveDirection.x = input.x;
+        moveDirection.z = input.y;
 
-        speedCurrect = speedWalk;
-        Vector3 moveDir = Vector3.zero;
-        
-        if (direction.magnitude >= 0.1f)
+        //Add move
+        if(moveDirection.magnitude >= 0.1f)
         {
-            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + camTransform.eulerAngles.y;
+            float targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg + cam.transform.eulerAngles.y;
             float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSpeedVelocity, turnSmoothTime);
             transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
 
-            moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            
-            
+            Vector3 move = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            controller.Move(move * speed * Time.deltaTime);
         }
-        
-        characterController.Move(moveDir.normalized * speedWalk * Time.deltaTime);
-        
+        //controller.Move(transform.TransformDirection(moveDirection) * speed * Time.deltaTime);
+
+        //Add gravity
+        playerVelocity.y += gravity * Time.deltaTime;
+        if(isGrounded && playerVelocity.y < 0)
+        {
+            playerVelocity.y = -2f;
+        }
+        controller.Move(playerVelocity * Time.deltaTime);
     }
 
     public void Jump()
     {
-        
-            moveVel.y += Mathf.Sqrt(3f*gravity);
-        
+        if(isGrounded)
+        {
+            playerVelocity.y = Mathf.Sqrt(jumpHeight * -gravity);
+        }
     }
 }
